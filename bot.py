@@ -1,6 +1,6 @@
 import os
 from telegram import Update, Bot
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, filters
 
 # ⚡ Variables de entorno (configura en Render)
 TOKEN = "8389580300:AAGVhDtjF0RmQHCKRSjo7FEaOUKIgnPGhiE"
@@ -58,7 +58,7 @@ def review_capture(update: Update, context: CallbackContext):
         f"Gracias @{username} 😎, esperando que {ADMIN_USERNAME} 🥷 👅 revise tu capture. Paciencia 😉⏳"
     )
 
-# Comando de administrador para aprobar video (ejemplo)
+# Comando de administrador para aprobar video
 def approve_video(update: Update, context: CallbackContext):
     if update.effective_user.username != ADMIN_USERNAME:
         update.message.reply_text("No tienes permiso para usar esto 😅")
@@ -85,7 +85,7 @@ dispatcher = updater.dispatcher
 
 dispatcher.add_handler(CommandHandler("start", start))
 dispatcher.add_handler(CommandHandler("approve", approve_video))
-dispatcher.add_handler(MessageHandler(Filters.photo | Filters.document, review_capture))
+dispatcher.add_handler(MessageHandler(filters.PHOTO | filters.Document.ALL, review_capture))
 
 # Arranca el bot
 updater.start_polling()
