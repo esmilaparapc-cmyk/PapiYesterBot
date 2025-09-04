@@ -3,7 +3,7 @@ from telegram import Update, Bot
 from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, filters
 
 # ⚡ Variables de entorno (configura en Render)
-TOKEN = "8389580300:AAGVhDtjF0RmQHCKRSjo7FEaOUKIgnPGhiE"
+TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_USERNAME = "PapiYester prømø 🥷 👅"
 
 # Base de datos temporal en memoria para usuarios
