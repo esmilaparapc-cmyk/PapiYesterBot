@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 # Token del bot
-TOKEN = "8389580300:AAGVhDtjF0RmQHCKRSjo7FEaOUKIgnPGhiE"
+TOKEN = 8389580300:AAGVhDtjF0RmQHCKRSjo7FEaOUKIgnPGhiE
 bot = telebot.TeleBot(TOKEN)
 
 # Diccionario para controlar solicitudes
