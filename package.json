@@ -1,0 +1,12 @@
+{
+  "name": "PapiYesterBot",
+  "version": "1.0.0",
+  "description": "Bot de Telegram de Papi Yester 🥷👅 que envía videos virales solo después de que los usuarios cumplan los pasos.",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.61.0"
+  }
+}
