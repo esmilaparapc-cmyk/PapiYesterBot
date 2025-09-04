@@ -1,92 +1,134 @@
 import os
-from telegram import Update, Bot
-from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, filters
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-# ⚡ Variables de entorno (configura en Render)
 TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_USERNAME = "PapiYester prømø 🥷 👅"
+ADMIN_ID = 7727617732  # tu ID de Telegram
 
-# Base de datos temporal en memoria para usuarios
-user_data = {}
-
-# Links de los videos
-videos = {
+VIDEO_LINKS = {
     "video1": {
-        "youtube": "https://youtu.be/H3P60ChH8bQ?si=o12zxApIOJ4jffnE",
-        "mega": "https://mega.nz/file/aA9D1DBS#xg1B0F7Hh9DQJdJEGvOoMqQ-1BXDNmIuFr1a21_omMM",
-        "password": "123YESTERDFC",
-        "instructions": "1️⃣ Dale like 👍\n2️⃣ Suscríbete 💎\n3️⃣ (Opcional) comenta ✍️\n4️⃣ Mándame captura 📸"
+        "yt": "https://youtu.be/H3P60ChH8bQ?si=o12zxApIOJ4jffnE",
+        "msg": (
+            "📽️🔥 VIDEO VIRAL DISPONIBLE 🔥📽️\n"
+            "1️⃣ Dale like 👍\n"
+            "2️⃣ Suscríbete 💎\n"
+            "3️⃣ (Opcional) deja un comentario ✍️\n"
+            "4️⃣ Mándame captura 📸 de que lo hiciste\n\n"
+            "Mira el video aquí 👇\n"
+            "🔗 https://youtu.be/H3P60ChH8bQ?si=o12zxApIOJ4jffnE\n"
+            "Después te pasaré el link de descarga 💾✨"
+        )
     },
     "video2": {
-        "youtube": "https://youtu.be/H3P60ChH8bQ?si=o12zxApIOJ4jffnE",
-        "mega": "https://mega.nz/file/PElVRahY#A2lXWSmVEbFw6TAMnATqMSHuYdOTB53-YWONsMqn0X4",
-        "password": "No tiene contraseña 🙅🏽‍♂️",
-        "instructions": "1️⃣ Dale like 👍\n2️⃣ Suscríbete 💎\n3️⃣ (Opcional) comenta ✍️\n4️⃣ Mándame captura 📸\nEso no te tomará ni 10 segundos ☺️\nSigue el canal para más contactos 😇\nhttps://whatsapp.com/channel/0029VbAlDJX7NoZx5V8pMC13"
+        "yt": "https://youtu.be/H3P60ChH8bQ?si=o12zxApIOJ4jffnE",
+        "msg": (
+            "🍑💦 VIDEO DE PAJITAAA 💔\n"
+            "1️⃣ Dale like 👍\n"
+            "2️⃣ Suscríbete 💎\n"
+            "3️⃣ (Opcional) deja un comentario ✍️\n"
+            "4️⃣ Mándame captura 📸 de que lo hiciste\n"
+            "Eso no te tomará ni 10 segundos ☺️\n"
+            "No te olvides de seguir el canal 😇\n\n"
+            "https://whatsapp.com/channel/0029VbAlDJX7NoZx5V8pMC13"
+        )
     },
     "video3": {
-        "youtube": "https://youtu.be/H3P60ChH8bQ?si=o12zxApIOJ4jffnE",
-        "mega": "https://mega.nz/collection/3NEW2TYA#jwKl6r2C1Ljid4QFDQg6zA",
-        "password": "No tiene contraseña 🙅🏽‍♂️",
-        "instructions": "🎬✨ PARA OBTENER EL VIDEO 🎥💫\n📌 SÍGA LOS PASOS 👣\nAgrégame, si no me agrega no paso 🙅🏽‍♂️\nSÍGUEME AQUI 👇\nFacebook: https://www.facebook.com/share/1FDuFq3pJe/?mibextid=wwXIfr\nInstagram: https://www.instagram.com/yesther_smith_xl?igsh=Z2Y4b2R5amNjb2Jh&utm_source=qr\nTikTok: www.tiktok.com/@papi_yester_dfc\n📸 Manda capture si no no paso ❌🚫💥"
+        "yt": "https://youtu.be/H3P60ChH8bQ?si=o12zxApIOJ4jffnE",
+        "msg": (
+            "🎬✨ PARA OBTENER EL VIDEO 🎥💫\n"
+            "📌 SÍGA LOS PASOS 👣👇:\n"
+            "AGRÉGAME, si no me agrega no paso 🙅🏽‍♂️\n"
+            "👀 SÍGUEME AQUI 👇👇\n"
+            "🔗 https://www.facebook.com/share/1FDuFq3pJe/?mibextid=wwXIfr\n"
+            "🌟 & AQUI 👇👇\n"
+            "🔗 https://www.instagram.com/yesther_smith_xl?igsh=Z2Y4b2R5amNjb2Jh&utm_source=qr\n"
+            "❌ SI NO TIENES FACEBOOK O IG, SÍGAME AQUI 👇👇\n"
+            "🔗 www.tiktok.com/@papi_yester_dfc\n"
+            "📸 MANDA CAPTURE SI NO NO PASO ❌🚫💥\n"
+            "😎 SI ME DEJAS DE SEGUIR 🤨 TENGO BOTS PARA ESO 🤖⚡💣\n"
+            "⚠️ LO QUE PASARÁ 📲 ES QUE SU NÚMERO SERÁ ENVIADO AUTOMÁTICAMENTE A 2 BOTS PARA SOPORTE"
+        )
     }
 }
 
-# Comando /start
+pendientes = {}  # user_id: video_elegido
+
 def start(update: Update, context: CallbackContext):
-    username = update.effective_user.username
-    user_data[username] = {"selected_video": None, "approved": False}
     update.message.reply_text(
-        f"Ey @{username} 👀, envíame el capture del video que quieras ver y {ADMIN_USERNAME} lo revisará antes de darte el link 🔗."
+        "Ey bro/mami 👀🙏\n"
+        "Mándame captura del video que quieras y yo te aprobaré si todo está OK 😎\n"
+        "Solo un video a la vez!"
     )
 
-# Recepción de capture
-def review_capture(update: Update, context: CallbackContext):
-    username = update.effective_user.username
-    if username not in user_data:
-        user_data[username] = {"selected_video": None, "approved": False}
+def capture(update: Update, context: CallbackContext):
+    user = update.message.from_user
+    user_id = user.id
+    username = user.username or "sin_username"
 
-    # Si ya eligieron video y está aprobado
-    if user_data[username]["approved"]:
-        update.message.reply_text(
-            f"Ah paj3r0 te atrapé 😏🔥\nPara conseguir otro video pregúntale a {ADMIN_USERNAME} aquí 👉 https://wa.me/message/5RCSCBNHHGMUB1 😎📸💥"
-        )
-        return
+    pendientes[user_id] = None  # todavía no sabemos qué video eligió
 
-    # Guardamos temporalmente que mandó capture
-    user_data[username]["approved"] = False
-    update.message.reply_text(
-        f"Gracias @{username} 😎, esperando que {ADMIN_USERNAME} 🥷 👅 revise tu capture. Paciencia 😉⏳"
+    context.bot.send_message(
+        chat_id=ADMIN_ID,
+        text=f"📸 Capture recibido de @{username} (ID: {user_id})\n"
+             f"Mira el capture y decide qué video darle"
     )
 
-# Comando de administrador para aprobar video
-def approve_video(update: Update, context: CallbackContext):
-    if update.effective_user.username != ADMIN_USERNAME:
-        update.message.reply_text("No tienes permiso para usar esto 😅")
-        return
+    if update.message.photo:
+        context.bot.send_photo(chat_id=ADMIN_ID, photo=update.message.photo[-1].file_id)
+    elif update.message.document:
+        context.bot.send_document(chat_id=ADMIN_ID, document=update.message.document.file_id)
 
+    update.message.reply_text(
+        "⏳ Esperando que Papi Yester prømø 🥷 👅 revise tu capture... Paciencia 🙏✨"
+    )
+
+def aprobar(update: Update, context: CallbackContext):
     args = context.args
-    if len(args) != 2:
-        update.message.reply_text("Uso: /approve <username> <video1|video2|video3>")
+    if update.message.from_user.id != ADMIN_ID:
         return
 
-    target_user, video_key = args
-    if target_user in user_data and video_key in videos:
-        user_data[target_user]["approved"] = True
-        user_data[target_user]["selected_video"] = video_key
-        video_info = videos[video_key]
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=f"@{target_user} ✅ Aprobado! Aquí está tu link 🔗:\nMega: {video_info['mega']}\nContraseña: {video_info['password']}\nYouTube: {video_info['youtube']}"
-        )
+    if len(args) < 2:
+        update.message.reply_text("Uso: /aprobar <user_id> <video1|video2|video3>")
+        return
 
-# Handlers
-updater = Updater(token=TOKEN, use_context=True)
-dispatcher = updater.dispatcher
+    try:
+        user_id = int(args[0])
+        video = args[1].lower()
+    except:
+        update.message.reply_text("Error con los parámetros.")
+        return
 
-dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(CommandHandler("approve", approve_video))
-dispatcher.add_handler(MessageHandler(filters.PHOTO | filters.Document.ALL, review_capture))
+    if user_id not in pendientes:
+        update.message.reply_text("Ese usuario no está pendiente.")
+        return
 
-# Arranca el bot
-updater.start_polling()
-updater.idle()
+    if video not in VIDEO_LINKS:
+        update.message.reply_text("Video inválido.")
+        return
+
+    pendientes.pop(user_id)
+    context.bot.send_message(chat_id=user_id, text=VIDEO_LINKS[video]["msg"])
+
+    update.message.reply_text(f"✅ Video enviado a {user_id}")
+
+def otro_video(update: Update, context: CallbackContext):
+    update.message.reply_text(
+        "Ah paj3r0 😏 te atrapé 🤭\n"
+        "Para conseguir otro video pregúntale a Papi Yester prømø øwø Aquí 👉 https://wa.me/message/5RCSCBNHHGMUB1\n"
+        "🔥🚀✨👀💥😎💣"
+    )
+
+def main():
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("aprobar", aprobar))
+    dp.add_handler(MessageHandler(Filters.photo | Filters.document, capture))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, otro_video))
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == "__main__":
+    main()
