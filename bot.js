@@ -43,9 +43,9 @@ function startFilter(userId, videoNumber) {
   userState[userId] = { video: videoNumber, startTime: new Date(), captures: [] };
   let msg = '';
   if(videoNumber === 3){
-    msg = `Hola @${userId} 🥷👅, antes de que disfrutes el 🔥 Video Adulto Legal de Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪, debes:\n1️⃣ Suscribirte al canal y dar like 👍 (comentario opcional 💬)\n2️⃣ Mandarme los 2 captures 📸\nTienes 30 minutos ⏱️ para completar!`;
+    msg = `Hola @${userId} 🥷👅, antes de que disfrutes los 🔥 Videos Cp (videos de niños majando y no ajo 🤭)  que Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 está regalando completamete "gratis", debes:\n1️⃣ Suscribirte al canal y dar like 👍 (comentario opcional 💬)\n2️⃣ Mandarme los 2 captures 📸\nTienes 30 minutos ⏱️ para completar!`;
   } else {
-    msg = `Ey @${userId} 😎, antes de que disfrutes este 🔥 ${videos[videoNumber].name}, mándame los 2 captures 📸 (YouTube + WhatsApp) para asegurarnos que eres un duro 💯. ¡Rápido, que el tiempo corre ⏱️!`;
+    msg = `Ey @${userId} 😎, antes de que disfrutes este 🔥 ${videos[videoNumber].name}, mándame los 2 captures 📸 (YouTube + WhatsApp) para asegurarnos que eres un/@ dur@ 💯. ¡Rápido, que el tiempo corre ⏱️!`;
   }
   sendMessage(userId, msg);
 }
@@ -55,13 +55,16 @@ function startFilter(userId, videoNumber) {
   bot.command(`video${num}`, (ctx) => {
     const userId = ctx.from.id;
     if(userState[userId] && userState[userId].captures.length < 2){
-      sendMessage(userId, `Tranquilo @${ctx.from.username} 😁, primero manda los captures 📸 y después puedes pedir otro video.`);
+      sendMessage(userId, `ctx.reply(`Hola @${ctx.from.username} 🥷👅, antes de que disfrutes los 🔥 Videos de los niños que están majanfo y no ajo 🤭, que  Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 te está regalando "gratis", debes:
+1️⃣ Suscribirte al canal y dar like 👍 (comentario opcional 💬)
+2️⃣ Mandarme los 2 captures 📸
+¡Tienes 30 minutos ⏱️ para completar!`)
       return;
     }
     startFilter(userId, num);
     // Enviar links iniciales
     if(num === 3){
-      sendMessage(userId, `🔥 Video Adulto: ${videos[3].youtube}\nCanal: ${videos[3].channel}`);
+      sendMessage(userId, `🔥 Video de niños singando : ${videos[3].youtube}\nCanal: ${videos[3].channel}`);
     } else {
       sendMessage(userId, `🔥 ${videos[num].name}:\nYouTube: ${videos[num].youtube}\nWhatsApp: ${videos[num].whatsapp}`);
     }
@@ -105,7 +108,7 @@ setInterval(() => {
   Object.keys(userState).forEach(uid => {
     const diff = (now - userState[uid].startTime)/60000; // minutos
     if(diff > 30){
-      sendMessage(uid, `⏱️ El tiempo límite de 30 minutos ha pasado 😔, vuelve a pedir el video usando /video1, /video2 o /video3`);
+      sendMessage(uid, `⏱️manit@ El tiempo límite de 30 minutos ha pasado que sal 😔, vuelve a pedir el video usando /video1, /video2 o /video3`);
       delete userState[uid];
     }
   });
