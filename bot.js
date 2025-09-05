@@ -1,118 +1,121 @@
-const { Telegraf } = require('telegraf');
-const bot = new Telegraf('8389580300:AAGVhDtjF0RmQHCKRSjo7FEaOUKIgnPGhiE'); // Tu token
-const OWNER_ID = 7727617732; // Tu ID de Telegram
+// keep_alive.js incluido primero
+const express = require("express");
+const app = express();
 
-// Videos y links
-const videos = {
+app.get("/", (req, res) => {
+  res.send("Bot de Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 🥷 👅 funcionando ✅");
+});
+
+app.listen(3000, () => console.log("Keep-alive activo en puerto 3000"));
+
+module.exports = app;
+
+// --------------------------------------------------
+
+const { Telegraf } = require("telegraf");
+const bot = new Telegraf("8389580300:AAGVhDtjF0RmQHCKRSjo7FEaOUKIgnPGhiE");
+const adminId = 7727617732;
+
+const captureTimeout = 30 * 60 * 1000; // 30 minutos
+let pendingCaptures = {}; // { userId: { video: 1, timer: setTimeout } }
+
+// Mensajes con flow
+const introMsg = (username) =>
+  `Hola @${username} 👋, soy el bot 🤖 de los videos virales de Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 🥷 👅
+Para ver los videos usa /video1, /video2 o /video3.
+Antes de pedir otro video, primero envía tus captures 😎`;
+
+const remindCapturesMsg = (username) =>
+  `Tranquil@ pajer@ @${username} 😁 primero manda los captures y luego puedes pedir otro video 😎`;
+
+const videoLinks = {
   1: {
-    name: "Video 1",
     youtube: "https://youtube.com/@papiyesterdfc?si=7MjVrM2-OBUzlUo0",
     whatsapp: "https://whatsapp.com/channel/0029VbAlDJX7NoZx5V8pMC13",
     mega: "https://mega.nz/file/aA9D1DBS#xg1B0F7Hh9DQJdJEGvOoMqQ-1BXDNmIuFr1a21_omMM",
-    password: "123YESTERDFC"
+    password: "123YESTERDFC",
   },
   2: {
-    name: "Video 2",
     youtube: "https://youtube.com/@papiyesterdfc?si=7MjVrM2-OBUzlUo0",
     whatsapp: "https://whatsapp.com/channel/0029VbAlDJX7NoZx5V8pMC13",
     mega: "https://mega.nz/file/PElVRahY#A2lXWSmVEbFw6TAMnATqMSHuYdOTB53-YWONsMqn0X4",
-    password: "No tiene contraseña"
+    password: "No tiene contraseña 🙅🏽‍♂️",
   },
   3: {
-    name: "Video 3",
     youtube: "https://youtu.be/H3P60ChH8bQ?si=QBQxHoKBduMVn2M6",
-    channel: "https://youtube.com/@papiyesterdfc?si=7MjVrM2-OBUzlUo0"
-  }
+    channel: "https://youtube.com/@papiyesterdfc?si=7MjVrM2-OBUzlUo0",
+    whatsapp: "https://whatsapp.com/channel/0029VbAlDJX7NoZx5V8pMC13",
+  },mega: "https://mega.nz/collection/SNNGDLaK#DHaQKN-aHiUobg3mK8wPxg"’
 };
 
-// Estado de usuarios
-const userState = {}; // { userId: { video: 1|2|3, startTime: Date, captures: [] } }
+bot.start((ctx) => ctx.reply(introMsg(ctx.from.username)));
 
-// Helper para mensajes con emojis y flow
-function sendMessage(userId, message) {
-  bot.telegram.sendMessage(userId, message, { parse_mode: 'HTML' });
+// Función para iniciar filtro de captures
+function startCaptureFilter(userId, videoNum, ctx) {
+  pendingCaptures[userId] = {
+    video: videoNum,
+    timer: setTimeout(() => {
+      delete pendingCaptures[userId];
+      ctx.reply(
+        `Tiempo límite de 30 minutos expirado ⏱️ para video ${videoNum} @${ctx.from.username}. Vuelve a pedirlo si quieres 😎`
+      );
+    }, captureTimeout),
+  };
 }
 
-// Comando /start
-bot.start((ctx) => {
-  sendMessage(ctx.from.id, `Hola @${ctx.from.username} 🤖, soy el bot oficial de los videos virales de Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 🥷 👅\nAquí podrás acceder a los videos 🔥\nUsa /video1, /video2 o /video3 para empezar.`);
-});
-
-// Función para iniciar filtro
-function startFilter(userId, videoNumber) {
-  userState[userId] = { video: videoNumber, startTime: new Date(), captures: [] };
-  let msg = '';
-  if(videoNumber === 3){
-    msg = `Hola @${userId} 🥷👅, antes de que disfrutes los 🔥 Videos Cp (videos de niños majando y no ajo 🤭)  que Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 está regalando completamete "gratis", debes:\n1️⃣ Suscribirte al canal y dar like 👍 (comentario opcional 💬)\n2️⃣ Mandarme los 2 captures 📸\nTienes 30 minutos ⏱️ para completar!`;
-  } else {
-    msg = `Ey @${userId} 😎, antes de que disfrutes este 🔥 ${videos[videoNumber].name}, mándame los 2 captures 📸 (YouTube + WhatsApp) para asegurarnos que eres un/@ dur@ 💯. ¡Rápido, que el tiempo corre ⏱️!`;
+// Comandos de videos
+bot.command("video1", (ctx) => {
+  if (pendingCaptures[ctx.from.id]) {
+    return ctx.reply(remindCapturesMsg(ctx.from.username));
   }
-  sendMessage(userId, msg);
-}
-
-// Comandos /video1, /video2, /video3
-[1,2,3].forEach(num => {
-  bot.command(`video${num}`, (ctx) => {
-    const userId = ctx.from.id;
-    if(userState[userId] && userState[userId].captures.length < 2){
-      sendMessage(userId, `ctx.reply(`Hola @${ctx.from.username} 🥷👅, antes de que disfrutes los 🔥 Videos de los niños que están majanfo y no ajo 🤭, que  Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 te está regalando "gratis", debes:
-1️⃣ Suscribirte al canal y dar like 👍 (comentario opcional 💬)
-2️⃣ Mandarme los 2 captures 📸
-¡Tienes 30 minutos ⏱️ para completar!`)
-      return;
-    }
-    startFilter(userId, num);
-    // Enviar links iniciales
-    if(num === 3){
-      sendMessage(userId, `🔥 Video de niños singando : ${videos[3].youtube}\nCanal: ${videos[3].channel}`);
-    } else {
-      sendMessage(userId, `🔥 ${videos[num].name}:\nYouTube: ${videos[num].youtube}\nWhatsApp: ${videos[num].whatsapp}`);
-    }
-  });
+  const v = videoLinks[1];
+  ctx.reply(
+    `🎬 VIDEO 1 🔥\nYouTube: ${v.youtube}\nWhatsApp: ${v.whatsapp}\nMega: ${v.mega}\nContraseña: ${v.password}\n\nManda los 2 captures en los próximos 30 minutos para recibir notificación! 🥷👅`
+  );
+  startCaptureFilter(ctx.from.id, 1, ctx);
 });
 
-// Recibir captures
-bot.on('photo', async (ctx) => {
-  const userId = ctx.from.id;
-  if(!userState[userId]){
-    sendMessage(userId, `Ey @${ctx.from.username} 🤖, primero pide un video usando /video1, /video2 o /video3`);
-    return;
+bot.command("video2", (ctx) => {
+  if (pendingCaptures[ctx.from.id]) {
+    return ctx.reply(remindCapturesMsg(ctx.from.username));
   }
-  userState[userId].captures.push(ctx.message.photo[ctx.message.photo.length-1].file_id);
-  sendMessage(userId, `Capture recibido 📸, ${userState[userId].captures.length}/2`);
-  // Mandar captures a ti automáticamente
-  if(userState[userId].captures.length === 2){
-    userState[userId].captures.forEach(c => bot.telegram.sendPhoto(OWNER_ID, c, { caption: `Captures de @${ctx.from.username}` }));
-    if(userState[userId].video === 3){
-      sendMessage(userId, `✅ Todo listo @${ctx.from.username}! Ya puedes disfrutar tu video 🔥`);
-      delete userState[userId];
-    } else {
-      sendMessage(userId, `Captures recibidos! Usa /aprobar ${userState[userId].video} para liberar tu video @${ctx.from.username} 😉`);
-    }
+  const v = videoLinks[2];
+  ctx.reply(
+    `🎬 VIDEO 2 🔥\nYouTube: ${v.youtube}\nWhatsApp: ${v.whatsapp}\nMega: ${v.mega}\nContraseña: ${v.password}\n\nManda los 2 captures en los próximos 30 minutos para recibir notificación! 🥷👅`
+  );
+  startCaptureFilter(ctx.from.id, 2, ctx);
+});
+
+bot.command("video3", (ctx) => {
+  if (pendingCaptures[ctx.from.id]) {
+    return ctx.reply(remindCapturesMsg(ctx.from.username));
   }
+  const v = videoLinks[3];
+  ctx.reply(
+    `🎬 VIDEO 3 🔥 PORNO Infantil -🔞\nYouTube Video: ${v.youtube}\nCanal: ${v.channel}\nWhatsApp: ${v.whatsapp}\n\nAntes de recibir el video final, manda los 2 captures en los próximos 30 minutos 🥷👅`
+  );
+  startCaptureFilter(ctx.from.id, 3, ctx);
 });
 
-// Comando /aprobar
-bot.command(/aprobar/, (ctx) => {
-  const userId = ctx.from.id;
-  if(userId !== OWNER_ID) return;
-  const args = ctx.message.text.split(' ')[1];
-  if(!args || ![1,2].includes(parseInt(args))) return;
-  const vid = parseInt(args);
-  sendMessage(OWNER_ID, `Video ${vid} liberado a usuario!`);
-});
+// Captures (ejemplo: usuario envía imágenes)
+bot.on("photo", (ctx) => {
+  const pending = pendingCaptures[ctx.from.id];
+  if (!pending) return;
 
-// Tiempo límite automático (30 min)
-setInterval(() => {
-  const now = new Date();
-  Object.keys(userState).forEach(uid => {
-    const diff = (now - userState[uid].startTime)/60000; // minutos
-    if(diff > 30){
-      sendMessage(uid, `⏱️manit@ El tiempo límite de 30 minutos ha pasado que sal 😔, vuelve a pedir el video usando /video1, /video2 o /video3`);
-      delete userState[uid];
-    }
-  });
-}, 60000); // cada 1 minuto
+  // Notifica al admin
+  bot.telegram.sendMessage(
+    adminId,
+    `📸 Captures recibidos de @${ctx.from.username} para VIDEO ${pending.video}`
+  );
+
+  // Limpiar filtro
+  clearTimeout(pending.timer);
+  delete pendingCaptures[ctx.from.id];
+
+  // Entregar video final automáticamente
+  const v = videoLinks[pending.video];
+  ctx.reply(`✅ Captures aprobados automáticamente @${ctx.from.username}! Aquí está tu link final: ${v.mega}`);
+});
 
 bot.launch();
-console.log("🤖 Bot encendido, Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 🥷 👅");
+console.log("Bot de Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 🥷 👅 activo y keep-alive funcionando ✅");
