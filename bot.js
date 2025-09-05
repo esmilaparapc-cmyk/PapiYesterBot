@@ -1,90 +1,115 @@
-const TelegramBot = require('node-telegram-bot-api');
+const { Telegraf } = require('telegraf');
+const bot = new Telegraf('8389580300:AAGVhDtjF0RmQHCKRSjo7FEaOUKIgnPGhiE'); // Tu token
+const OWNER_ID = 7727617732; // Tu ID de Telegram
 
-// Token del bot
-const token = "8389580300:AAGVhDtjF0RmQHCKRSjo7FEaOUKIgnPGhiE";
-
-// Tu ID de Telegram (para recibir captures y notificaciones)
-const adminId = 7727617732;
-
-// Links oficiales
-const youtubeLink = "https://youtube.com/@papiyesterdfc?si=7MjVrM2-OBUzlUo0";
-const whatsappLink = "https://whatsapp.com/channel/0029VbAlDJX7NoZx5V8pMC13";
-
-// Videos
+// Videos y links
 const videos = {
-  1: "📽️🔥 VIDEO VIRAL DISPONIBLE 🔥📽️\n📥 DESCÁRGALO AQUI 👇👇\n🔗 https://mega.nz/file/aA9D1DBS#xg1B0F7Hh9DQJdJEGvOoMqQ-1BXDNmIuFr1a21_omMM\n\n🔑 CONTRASEÑA: 👉 123YESTERDFC 🔐",
-  2: "🍑💦 Los videos de pajitaaa pegándole cuernos al viejito 👴💔🔐\n📥 DESCARGA AQUI 👇👇\n🔗 https://mega.nz/file/PElVRahY#A2lXWSmVEbFw6TAMnATqMSHuYdOTB53-YWONsMqn0X4\n\n🔑 Contraseña: No tiene 🙅🏽‍♂️\n⚠️ SOLO LOS DUROS TIENEN ACCESO 🚀",
-  3: "🔥 COLECCIÓN COMPLETA DISPONIBLE 🔥\n🔗 https://mega.nz/collection/SNNGDLaK#DHaQKN-aHiUobg3mK8wPxg\n\n🔑 Contraseña: Ninguna 😎"
+  1: {
+    name: "Video 1",
+    youtube: "https://youtube.com/@papiyesterdfc?si=7MjVrM2-OBUzlUo0",
+    whatsapp: "https://whatsapp.com/channel/0029VbAlDJX7NoZx5V8pMC13",
+    mega: "https://mega.nz/file/aA9D1DBS#xg1B0F7Hh9DQJdJEGvOoMqQ-1BXDNmIuFr1a21_omMM",
+    password: "123YESTERDFC"
+  },
+  2: {
+    name: "Video 2",
+    youtube: "https://youtube.com/@papiyesterdfc?si=7MjVrM2-OBUzlUo0",
+    whatsapp: "https://whatsapp.com/channel/0029VbAlDJX7NoZx5V8pMC13",
+    mega: "https://mega.nz/file/PElVRahY#A2lXWSmVEbFw6TAMnATqMSHuYdOTB53-YWONsMqn0X4",
+    password: "No tiene contraseña"
+  },
+  3: {
+    name: "Video 3",
+    youtube: "https://youtu.be/H3P60ChH8bQ?si=QBQxHoKBduMVn2M6",
+    channel: "https://youtube.com/@papiyesterdfc?si=7MjVrM2-OBUzlUo0"
+  }
 };
 
-// Inicializa el bot
-const bot = new TelegramBot(token, { polling: true });
+// Estado de usuarios
+const userState = {}; // { userId: { video: 1|2|3, startTime: Date, captures: [] } }
 
-// Estado de los usuarios
-const userRequests = {};
-
-// Mensaje inicial cuando alguien pide un video
-function requestVideo(chatId, username, videoNumber) {
-  userRequests[chatId] = { video: videoNumber, captures: [], timer: null };
-
-  bot.sendMessage(chatId, `🤖 Hola soy el BOT OFICIAL de los videos virales de *Papi Yester Prømø* 🥷👅\n\n` +
-    `Aquí nadie se queda sin su contenido 🔥, pero primero tienes que **demostrar que eres real** 👀.\n\n` +
-    `👉 Para desbloquear el *Video ${videoNumber}* haz lo siguiente:\n\n` +
-    `1️⃣ Suscríbete al canal de YouTube 👉 ${youtubeLink}\n` +
-    `2️⃣ Únete al canal de WhatsApp 👉 ${whatsappLink}\n` +
-    `3️⃣ 📸 Mándame **2 captures obligatorios** (uno de YouTube + uno de WhatsApp).\n\n` +
-    `⏳ Tienes *15 minutos* pa mandar esos captures, si no, perdiste la vuelta ❌.\n\n` +
-    `Cuando cumplas 👉 espera mi confirmación.`);
-
-  // Inicia un temporizador de 15 minutos
-  userRequests[chatId].timer = setTimeout(() => {
-    if (userRequests[chatId] && userRequests[chatId].captures.length < 2) {
-      bot.sendMessage(chatId, "⏰ Se acabó tu tiempo, perdiste la oportunidad 😢\nPídele de nuevo al bot si quieres intentar otra vez.");
-      delete userRequests[chatId];
-    }
-  }, 15 * 60 * 1000);
+// Helper para mensajes con emojis y flow
+function sendMessage(userId, message) {
+  bot.telegram.sendMessage(userId, message, { parse_mode: 'HTML' });
 }
 
-// Comandos para pedir videos
-bot.onText(/\/video1/, (msg) => requestVideo(msg.chat.id, msg.from.username, 1));
-bot.onText(/\/video2/, (msg) => requestVideo(msg.chat.id, msg.from.username, 2));
-bot.onText(/\/video3/, (msg) => requestVideo(msg.chat.id, msg.from.username, 3));
+// Comando /start
+bot.start((ctx) => {
+  sendMessage(ctx.from.id, `Hola @${ctx.from.username} 🤖, soy el bot oficial de los videos virales de Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 🥷 👅\nAquí podrás acceder a los videos 🔥\nUsa /video1, /video2 o /video3 para empezar.`);
+});
 
-// Manejo de fotos (captures)
-bot.on("photo", (msg) => {
-  const chatId = msg.chat.id;
-  const username = msg.from.username || msg.from.first_name;
+// Función para iniciar filtro
+function startFilter(userId, videoNumber) {
+  userState[userId] = { video: videoNumber, startTime: new Date(), captures: [] };
+  let msg = '';
+  if(videoNumber === 3){
+    msg = `Hola @${userId} 🥷👅, antes de que disfrutes el 🔥 Video Adulto Legal de Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪, debes:\n1️⃣ Suscribirte al canal y dar like 👍 (comentario opcional 💬)\n2️⃣ Mandarme los 2 captures 📸\nTienes 30 minutos ⏱️ para completar!`;
+  } else {
+    msg = `Ey @${userId} 😎, antes de que disfrutes este 🔥 ${videos[videoNumber].name}, mándame los 2 captures 📸 (YouTube + WhatsApp) para asegurarnos que eres un duro 💯. ¡Rápido, que el tiempo corre ⏱️!`;
+  }
+  sendMessage(userId, msg);
+}
 
-  if (!userRequests[chatId]) {
-    bot.sendMessage(chatId, "⚠️ Primero pide un video con /video1, /video2 o /video3.");
+// Comandos /video1, /video2, /video3
+[1,2,3].forEach(num => {
+  bot.command(`video${num}`, (ctx) => {
+    const userId = ctx.from.id;
+    if(userState[userId] && userState[userId].captures.length < 2){
+      sendMessage(userId, `Tranquilo @${ctx.from.username} 😁, primero manda los captures 📸 y después puedes pedir otro video.`);
+      return;
+    }
+    startFilter(userId, num);
+    // Enviar links iniciales
+    if(num === 3){
+      sendMessage(userId, `🔥 Video Adulto: ${videos[3].youtube}\nCanal: ${videos[3].channel}`);
+    } else {
+      sendMessage(userId, `🔥 ${videos[num].name}:\nYouTube: ${videos[num].youtube}\nWhatsApp: ${videos[num].whatsapp}`);
+    }
+  });
+});
+
+// Recibir captures
+bot.on('photo', async (ctx) => {
+  const userId = ctx.from.id;
+  if(!userState[userId]){
+    sendMessage(userId, `Ey @${ctx.from.username} 🤖, primero pide un video usando /video1, /video2 o /video3`);
     return;
   }
-
-  userRequests[chatId].captures.push(msg.photo[msg.photo.length - 1].file_id);
-
-  if (userRequests[chatId].captures.length === 2) {
-    // Enviar notificación al admin con las fotos
-    bot.sendMessage(adminId, `📩 Nuevo intento de desbloqueo\n👤 Usuario: @${username}\n🆔 ID: ${chatId}\nPidió: Video ${userRequests[chatId].video}`);
-    userRequests[chatId].captures.forEach((fileId) => {
-      bot.sendPhoto(adminId, fileId);
-    });
-
-    bot.sendMessage(chatId, "✅ Recibí tus captures, espera que *Papi Yester* los revise y te apruebe. 🔥");
+  userState[userId].captures.push(ctx.message.photo[ctx.message.photo.length-1].file_id);
+  sendMessage(userId, `Capture recibido 📸, ${userState[userId].captures.length}/2`);
+  // Mandar captures a ti automáticamente
+  if(userState[userId].captures.length === 2){
+    userState[userId].captures.forEach(c => bot.telegram.sendPhoto(OWNER_ID, c, { caption: `Captures de @${ctx.from.username}` }));
+    if(userState[userId].video === 3){
+      sendMessage(userId, `✅ Todo listo @${ctx.from.username}! Ya puedes disfrutar tu video 🔥`);
+      delete userState[userId];
+    } else {
+      sendMessage(userId, `Captures recibidos! Usa /aprobar ${userState[userId].video} para liberar tu video @${ctx.from.username} 😉`);
+    }
   }
 });
 
-// Comando para aprobar usuarios
-bot.onText(/\/aprobar (\d+) (\d+)/, (msg, match) => {
-  if (msg.chat.id !== adminId) return;
-
-  const videoNumber = parseInt(match[1]);
-  const userId = parseInt(match[2]);
-
-  if (videos[videoNumber]) {
-    bot.sendMessage(userId, `🎉 Felicidades! *Papi Yester* aprobó tus captures ✅\nAquí tienes tu premio 👇\n\n${videos[videoNumber]}`);
-    bot.sendMessage(adminId, `✅ Aprobaste al usuario ${userId} para el Video ${videoNumber}.`);
-    delete userRequests[userId];
-  } else {
-    bot.sendMessage(adminId, "⚠️ Ese número de video no existe.");
-  }
+// Comando /aprobar
+bot.command(/aprobar/, (ctx) => {
+  const userId = ctx.from.id;
+  if(userId !== OWNER_ID) return;
+  const args = ctx.message.text.split(' ')[1];
+  if(!args || ![1,2].includes(parseInt(args))) return;
+  const vid = parseInt(args);
+  sendMessage(OWNER_ID, `Video ${vid} liberado a usuario!`);
 });
+
+// Tiempo límite automático (30 min)
+setInterval(() => {
+  const now = new Date();
+  Object.keys(userState).forEach(uid => {
+    const diff = (now - userState[uid].startTime)/60000; // minutos
+    if(diff > 30){
+      sendMessage(uid, `⏱️ El tiempo límite de 30 minutos ha pasado 😔, vuelve a pedir el video usando /video1, /video2 o /video3`);
+      delete userState[uid];
+    }
+  });
+}, 60000); // cada 1 minuto
+
+bot.launch();
+console.log("🤖 Bot encendido, Päpï 𝓨𝓮𝓼𝓽𝓮𝓻 prømø ØWØ𓆪 🥷 👅");
